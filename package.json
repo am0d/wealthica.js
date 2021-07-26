@@ -1,0 +1,9 @@
+{
+  "name": "wealthica-demo-connector",
+  "version": "1.0.0",
+  "private": true,
+  "devDependencies": {
+    "lodash": "^4.17.21",
+    "moment": "^2.29.1"
+  }
+}
