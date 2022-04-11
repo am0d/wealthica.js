@@ -1,20 +1,28 @@
-import type { Cheerio, Element, Node } from 'cheerio';
+import { ElementHandle, Page } from 'puppeteer';
 
-export function findFirstElement(section: Cheerio<Node>, selector: string, message: string): Cheerio<Element> {
-    const element = section.find(selector).first();
-    if (!element?.length) {
-        throw new Error(`${message}\nSelector: ${selector}\n${section.html()}`);
+export async function findFirstElement(
+    section: ElementHandle<Element>,
+    selector: string,
+    message: string,
+): Promise<ElementHandle<Element>> {
+    const element = await section.$(selector);
+    if (!element) {
+        throw new Error(`${message}\nSelector: ${selector}\n${await section.$eval('.', (el) => el.innerHTML)}`);
     }
     return element;
 }
-export function getTabWithName(section: Cheerio<Element>, tabName: string): Cheerio<Element> {
-    const tabList = findFirstElement(section, '[role="tablist"]', `Tab list not found for ${tabName}`);
-    const tabId = findFirstElement(
-        tabList,
-        `[role="tab"]:contains("${tabName}")`,
-        `Tab control not found for ${tabName}`,
-    ).attr('aria-controls');
-    const tabPanel = findFirstElement(section, `#${tabId}`, `Tab panel not found for ${tabName}`);
+export async function getTabWithName(
+    section: ElementHandle<Element>,
+    tabName: string,
+): Promise<ElementHandle<Element>> {
+    const tabList = await findFirstElement(section, '[role="tablist"]', `Tab list not found for ${tabName}`);
+    const tabId = await (
+        await findFirstElement(tabList, `[role="tab"]:contains("${tabName}")`, `Tab control not found for ${tabName}`)
+    ).$eval('.', (el) => el.getAttribute('aria-controls'));
+    if (!tabId) {
+        throw new Error('Could not find `aria-controls` attribute for tab named ' + tabName);
+    }
+    const tabPanel = await findFirstElement(section, `#${tabId}`, `Tab panel not found for ${tabName}`);
     return tabPanel;
 }
 

@@ -1,11 +1,24 @@
 import fetch from 'node-fetch';
 import { readFile } from 'fs/promises';
-import { FormData } from 'formdata-node';
 import path from 'path';
 
+import puppeteer, { ConsoleMessage } from 'puppeteer';
+
+function consoleMsg(msg: ConsoleMessage) {
+    const msgType = msg.type() as unknown as keyof Console;
+    if (msgType in console) {
+        (console[msgType] as typeof console.log)(msg.text());
+    } else {
+        return console.debug(msg.text());
+    }
+}
+
 export async function getLoginPage() {
-    const response = await fetch('https://iac.secureweb.inalco.com/', { redirect: 'follow' });
-    return response;
+    const browser = await puppeteer.launch({ headless: false, defaultViewport: { height: 768, width: 1024 } });
+    const page = await browser.newPage();
+    await page.goto('https://iac.secureweb.inalco.com/', { waitUntil: 'load' });
+    page.on('console', consoleMsg);
+    return page;
 }
 
 export async function submitLoginPage(url: string, fields: Map<string, string | undefined>, cookies: string[]) {
